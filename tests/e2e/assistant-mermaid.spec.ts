@@ -24,4 +24,6 @@ test('validates assistant mermaid rendering behavior', async ({ page }) => {
   await expect(
     maliciousAssistant.locator('[onload], [onclick], [onerror]')
   ).toHaveCount(0);
+
+  await expect(page.getByText('Syntax error in text')).toHaveCount(0);
 });

@@ -98,6 +98,7 @@ function ensureMermaidInitialized(): void {
   mermaid.initialize({
     startOnLoad: false,
     securityLevel: 'strict',
+    suppressErrorRendering: true,
     flowchart: {
       htmlLabels: false,
     },
