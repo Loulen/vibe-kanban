@@ -50,6 +50,18 @@ export const useJsonPatchWsStream = <T extends object>(
   const injectInitialEntry = options?.injectInitialEntry;
   const deduplicatePatches = options?.deduplicatePatches;
 
+  function closeWebSocketSafely(ws: WebSocket) {
+    if (ws.readyState === WebSocket.CONNECTING) {
+      ws.onopen = () => ws.close(1000, 'cancelled-before-open');
+      ws.onerror = null;
+      ws.onclose = null;
+      ws.onmessage = null;
+      return;
+    }
+
+    ws.close();
+  }
+
   function scheduleReconnect() {
     if (retryTimerRef.current) return; // already scheduled
     // Exponential backoff with cap: 1s, 2s, 4s, 8s (max), then stay at 8s
@@ -65,7 +77,7 @@ export const useJsonPatchWsStream = <T extends object>(
     if (!enabled || !endpoint) {
       // Close connection and reset state
       if (wsRef.current) {
-        wsRef.current.close();
+        closeWebSocketSafely(wsRef.current);
         wsRef.current = null;
       }
       if (retryTimerRef.current) {
@@ -104,7 +116,7 @@ export const useJsonPatchWsStream = <T extends object>(
           const ws = await openLocalApiWebSocket(endpoint);
 
           if (cancelled) {
-            ws.close();
+            closeWebSocketSafely(ws);
             return;
           }
 
@@ -209,7 +221,7 @@ export const useJsonPatchWsStream = <T extends object>(
         ws.onclose = null;
 
         // Close regardless of state
-        ws.close();
+        closeWebSocketSafely(ws);
         wsRef.current = null;
       }
       if (retryTimerRef.current) {
