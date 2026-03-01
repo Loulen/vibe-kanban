@@ -23,17 +23,13 @@ import {
   PR_COMMENT_EXPORT_TRANSFORMER,
 } from '@vibe/ui/components/pr-comment-node';
 import { createImageNode } from '@vibe/ui/components/image-node';
+import { createMermaidNode } from '@vibe/ui/components/mermaid-node';
 import {
   ComponentInfoNode,
   COMPONENT_INFO_TRANSFORMER,
   COMPONENT_INFO_EXPORT_TRANSFORMER,
   $isComponentInfoNode,
 } from '@vibe/ui/components/component-info-node';
-import {
-  MermaidNode,
-  MERMAID_EXPORT_TRANSFORMER,
-  MERMAID_TRANSFORMER,
-} from '@vibe/ui/components/mermaid-node';
 import { TABLE_TRANSFORMER } from '@vibe/ui/lib/table-transformer';
 import {
   TaskAttemptContext,
@@ -80,6 +76,7 @@ import { Check, Clipboard, Pencil, Trash2 } from 'lucide-react';
 import type { RepoItem } from '@/shared/types/selectionItems';
 import { TagEditDialog } from '@/shared/dialogs/shared/TagEditDialog';
 import { ImagePreviewDialog } from '@/shared/dialogs/wysiwyg/ImagePreviewDialog';
+import { MermaidZoomDialog } from '@/shared/dialogs/wysiwyg/MermaidZoomDialog';
 import {
   SelectionDialog,
   type SelectionPage,
@@ -373,6 +370,17 @@ const WYSIWYGEditor = forwardRef<WYSIWYGEditorRef, WysiwygProps>(
       []
     );
     const { ImageNode, IMAGE_TRANSFORMER, $isImageNode } = imageNodeDefinition;
+    const mermaidNodeDefinition = useMemo(
+      () =>
+        createMermaidNode({
+          openMermaidPreview: ({ code }) => {
+            void MermaidZoomDialog.show({ code });
+          },
+        }),
+      []
+    );
+    const { MermaidNode, MERMAID_EXPORT_TRANSFORMER, MERMAID_TRANSFORMER } =
+      mermaidNodeDefinition;
 
     const initialConfig = useMemo(
       () => ({
@@ -432,7 +440,7 @@ const WYSIWYGEditor = forwardRef<WYSIWYGEditorRef, WysiwygProps>(
           ...(enableMermaid ? [MermaidNode] : []),
         ],
       }),
-      [ImageNode, enableMermaid]
+      [ImageNode, MermaidNode, enableMermaid]
     );
 
     // Extended transformers with image, PR comment, and code block support (memoized to prevent unnecessary re-renders)
@@ -450,7 +458,12 @@ const WYSIWYGEditor = forwardRef<WYSIWYGEditorRef, WysiwygProps>(
         CODE,
         ...TRANSFORMERS,
       ],
-      [IMAGE_TRANSFORMER, enableMermaid]
+      [
+        IMAGE_TRANSFORMER,
+        MERMAID_EXPORT_TRANSFORMER,
+        MERMAID_TRANSFORMER,
+        enableMermaid,
+      ]
     );
 
     // Memoized handlers for ContentEditable to prevent re-renders
