@@ -120,6 +120,23 @@ const MermaidZoomDialogImpl = create<MermaidZoomDialogProps>((props) => {
     };
   }, [applyFitToViewport]);
 
+  useEffect(() => {
+    const viewport = viewportRef.current;
+    if (!viewport) return;
+
+    const preventNativeZoom = (event: WheelEvent) => {
+      event.preventDefault();
+    };
+
+    viewport.addEventListener('wheel', preventNativeZoom, {
+      passive: false,
+    });
+
+    return () => {
+      viewport.removeEventListener('wheel', preventNativeZoom);
+    };
+  }, []);
+
   const zoomAtPoint = useCallback(
     (factor: number, pointX: number, pointY: number) => {
       setTransform((current) => {
@@ -146,6 +163,7 @@ const MermaidZoomDialogImpl = create<MermaidZoomDialogProps>((props) => {
   const handleWheel = useCallback(
     (event: React.WheelEvent<HTMLDivElement>) => {
       event.preventDefault();
+      event.stopPropagation();
 
       const viewport = viewportRef.current;
       if (!viewport) return;
@@ -233,7 +251,7 @@ const MermaidZoomDialogImpl = create<MermaidZoomDialogProps>((props) => {
 
   return (
     <Dialog open={modal.visible} onOpenChange={handleClose}>
-      <DialogContent className="w-[90vw] max-w-[90vw] h-[85vh] max-h-[85vh] overflow-hidden p-0 gap-0">
+      <DialogContent className="w-[96vw] max-w-[96vw] h-[92vh] max-h-[92vh] overflow-hidden p-0 gap-0">
         <DialogHeader className="border-b px-4 py-3">
           <DialogTitle>Mermaid diagram</DialogTitle>
         </DialogHeader>
@@ -273,7 +291,7 @@ const MermaidZoomDialogImpl = create<MermaidZoomDialogProps>((props) => {
 
         <div
           ref={viewportRef}
-          className="relative h-full w-full overflow-hidden bg-secondary cursor-grab active:cursor-grabbing"
+          className="relative h-full w-full overflow-hidden bg-secondary cursor-grab active:cursor-grabbing touch-none overscroll-none"
           onWheel={handleWheel}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
