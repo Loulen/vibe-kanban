@@ -42,6 +42,7 @@
     "remote:dev:clean": "cd crates/remote && docker compose --env-file .env.remote down -v",
     "remote:prepare-db": "cd crates/remote && bash scripts/prepare-db.sh",
     "remote:prepare-db:check": "cd crates/remote && bash scripts/prepare-db.sh --check",
+    "preview:mermaid": "pnpm --filter @vibe/local-web run dev --port ${FRONTEND_PORT:-4173}",
     "e2e:assistant-mermaid": "playwright test tests/e2e/assistant-mermaid.spec.ts",
     "e2e:test": "playwright test"
   },
