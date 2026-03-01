@@ -120,23 +120,6 @@ const MermaidZoomDialogImpl = create<MermaidZoomDialogProps>((props) => {
     };
   }, [applyFitToViewport]);
 
-  useEffect(() => {
-    const viewport = viewportRef.current;
-    if (!viewport) return;
-
-    const preventNativeZoom = (event: WheelEvent) => {
-      event.preventDefault();
-    };
-
-    viewport.addEventListener('wheel', preventNativeZoom, {
-      passive: false,
-    });
-
-    return () => {
-      viewport.removeEventListener('wheel', preventNativeZoom);
-    };
-  }, []);
-
   const zoomAtPoint = useCallback(
     (factor: number, pointX: number, pointY: number) => {
       setTransform((current) => {
@@ -160,13 +143,13 @@ const MermaidZoomDialogImpl = create<MermaidZoomDialogProps>((props) => {
     []
   );
 
-  const handleWheel = useCallback(
-    (event: React.WheelEvent<HTMLDivElement>) => {
+  useEffect(() => {
+    const viewport = viewportRef.current;
+    if (!viewport) return;
+
+    const handleNativeWheel = (event: WheelEvent) => {
       event.preventDefault();
       event.stopPropagation();
-
-      const viewport = viewportRef.current;
-      if (!viewport) return;
 
       const rect = viewport.getBoundingClientRect();
       const pointX = event.clientX - rect.left;
@@ -174,9 +157,16 @@ const MermaidZoomDialogImpl = create<MermaidZoomDialogProps>((props) => {
       const factor = event.deltaY < 0 ? ZOOM_STEP : 1 / ZOOM_STEP;
 
       zoomAtPoint(factor, pointX, pointY);
-    },
-    [zoomAtPoint]
-  );
+    };
+
+    viewport.addEventListener('wheel', handleNativeWheel, {
+      passive: false,
+    });
+
+    return () => {
+      viewport.removeEventListener('wheel', handleNativeWheel);
+    };
+  }, [zoomAtPoint]);
 
   const handlePointerDown = useCallback(
     (event: React.PointerEvent<HTMLDivElement>) => {
@@ -292,7 +282,6 @@ const MermaidZoomDialogImpl = create<MermaidZoomDialogProps>((props) => {
         <div
           ref={viewportRef}
           className="relative h-full w-full overflow-hidden bg-secondary cursor-grab active:cursor-grabbing touch-none overscroll-none"
-          onWheel={handleWheel}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
