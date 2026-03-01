@@ -29,6 +29,11 @@ import {
   COMPONENT_INFO_EXPORT_TRANSFORMER,
   $isComponentInfoNode,
 } from '@vibe/ui/components/component-info-node';
+import {
+  MermaidNode,
+  MERMAID_EXPORT_TRANSFORMER,
+  MERMAID_TRANSFORMER,
+} from '@vibe/ui/components/mermaid-node';
 import { TABLE_TRANSFORMER } from '@vibe/ui/lib/table-transformer';
 import {
   TaskAttemptContext,
@@ -130,6 +135,8 @@ type WysiwygProps = {
   saveStatus?: 'idle' | 'saved';
   /** Additional actions to render in static toolbar */
   staticToolbarActions?: ReactNode;
+  /** Enables Mermaid fenced code rendering support */
+  enableMermaid?: boolean;
 };
 
 /** Ref interface for WYSIWYGEditor, exposing imperative methods */
@@ -265,6 +272,7 @@ const WYSIWYGEditor = forwardRef<WYSIWYGEditorRef, WysiwygProps>(
       showStaticToolbar = false,
       saveStatus,
       staticToolbarActions,
+      enableMermaid = false,
     }: WysiwygProps,
     ref: React.ForwardedRef<WYSIWYGEditorRef>
   ) {
@@ -421,9 +429,10 @@ const WYSIWYGEditor = forwardRef<WYSIWYGEditorRef, WysiwygProps>(
           TableNode,
           TableRowNode,
           TableCellNode,
+          ...(enableMermaid ? [MermaidNode] : []),
         ],
       }),
-      [ImageNode]
+      [ImageNode, enableMermaid]
     );
 
     // Extended transformers with image, PR comment, and code block support (memoized to prevent unnecessary re-renders)
@@ -435,10 +444,13 @@ const WYSIWYGEditor = forwardRef<WYSIWYGEditorRef, WysiwygProps>(
         PR_COMMENT_TRANSFORMER,
         COMPONENT_INFO_EXPORT_TRANSFORMER,
         COMPONENT_INFO_TRANSFORMER,
+        ...(enableMermaid
+          ? [MERMAID_EXPORT_TRANSFORMER, MERMAID_TRANSFORMER]
+          : []),
         CODE,
         ...TRANSFORMERS,
       ],
-      [IMAGE_TRANSFORMER]
+      [IMAGE_TRANSFORMER, enableMermaid]
     );
 
     // Memoized handlers for ContentEditable to prevent re-renders

@@ -445,11 +445,13 @@ function AppChatMarkdown({
   workspaceId,
   className,
   maxWidth,
+  enableMermaid = false,
 }: {
   content: string;
   workspaceId: string | undefined;
   className: string | undefined;
   maxWidth: string | undefined;
+  enableMermaid?: boolean;
 }) {
   const { viewFileInChanges, findMatchingDiffPath } = useChangesView();
 
@@ -465,6 +467,7 @@ function AppChatMarkdown({
           disabled
           className={className}
           taskAttemptId={workspaceId}
+          enableMermaid={enableMermaid}
           findMatchingDiffPath={findMatchingDiffPath}
           onCodeClick={viewFileInChanges}
         />
@@ -730,7 +733,7 @@ function UserMessageEntry({
 /**
  * Assistant message entry with expandable content
  */
-function AssistantMessageEntry({
+export function AssistantMessageEntry({
   content,
   workspaceId,
 }: {
@@ -747,6 +750,7 @@ function AssistantMessageEntry({
           workspaceId={workspaceId}
           className={undefined}
           maxWidth={undefined}
+          enableMermaid={true}
         />
       )}
     />
