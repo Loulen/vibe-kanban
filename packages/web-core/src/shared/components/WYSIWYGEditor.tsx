@@ -23,6 +23,7 @@ import {
   PR_COMMENT_EXPORT_TRANSFORMER,
 } from '@vibe/ui/components/pr-comment-node';
 import { createImageNode } from '@vibe/ui/components/image-node';
+import { createMermaidNode } from '@vibe/ui/components/mermaid-node';
 import {
   ComponentInfoNode,
   COMPONENT_INFO_TRANSFORMER,
@@ -75,6 +76,7 @@ import { Check, Clipboard, Pencil, Trash2 } from 'lucide-react';
 import type { RepoItem } from '@/shared/types/selectionItems';
 import { TagEditDialog } from '@/shared/dialogs/shared/TagEditDialog';
 import { ImagePreviewDialog } from '@/shared/dialogs/wysiwyg/ImagePreviewDialog';
+import { MermaidZoomDialog } from '@/shared/dialogs/wysiwyg/MermaidZoomDialog';
 import {
   SelectionDialog,
   type SelectionPage,
@@ -365,6 +367,17 @@ const WYSIWYGEditor = forwardRef<WYSIWYGEditorRef, WysiwygProps>(
       []
     );
     const { ImageNode, IMAGE_TRANSFORMER, $isImageNode } = imageNodeDefinition;
+    const mermaidNodeDefinition = useMemo(
+      () =>
+        createMermaidNode({
+          openMermaidPreview: ({ code }) => {
+            void MermaidZoomDialog.show({ code });
+          },
+        }),
+      []
+    );
+    const { MermaidNode, MERMAID_EXPORT_TRANSFORMER, MERMAID_TRANSFORMER } =
+      mermaidNodeDefinition;
 
     const initialConfig = useMemo(
       () => ({
@@ -416,6 +429,7 @@ const WYSIWYGEditor = forwardRef<WYSIWYGEditorRef, WysiwygProps>(
           CodeHighlightNode,
           LinkNode,
           ImageNode,
+          MermaidNode,
           PrCommentNode,
           ComponentInfoNode,
           TableNode,
@@ -431,6 +445,8 @@ const WYSIWYGEditor = forwardRef<WYSIWYGEditorRef, WysiwygProps>(
       () => [
         TABLE_TRANSFORMER,
         IMAGE_TRANSFORMER,
+        MERMAID_EXPORT_TRANSFORMER,
+        MERMAID_TRANSFORMER,
         PR_COMMENT_EXPORT_TRANSFORMER,
         PR_COMMENT_TRANSFORMER,
         COMPONENT_INFO_EXPORT_TRANSFORMER,
@@ -438,7 +454,7 @@ const WYSIWYGEditor = forwardRef<WYSIWYGEditorRef, WysiwygProps>(
         CODE,
         ...TRANSFORMERS,
       ],
-      [IMAGE_TRANSFORMER]
+      [IMAGE_TRANSFORMER, MERMAID_EXPORT_TRANSFORMER, MERMAID_TRANSFORMER]
     );
 
     // Memoized handlers for ContentEditable to prevent re-renders
