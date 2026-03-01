@@ -124,6 +124,23 @@ const MermaidZoomDialogImpl = create<MermaidZoomDialogProps>((props) => {
     const viewport = viewportRef.current;
     if (!viewport) return;
 
+    const blockBrowserWheelDefault = (event: WheelEvent) => {
+      event.preventDefault();
+    };
+
+    viewport.addEventListener('wheel', blockBrowserWheelDefault, {
+      passive: false,
+    });
+
+    return () => {
+      viewport.removeEventListener('wheel', blockBrowserWheelDefault);
+    };
+  }, []);
+
+  useEffect(() => {
+    const viewport = viewportRef.current;
+    if (!viewport) return;
+
     const preventNativeZoom = (event: WheelEvent) => {
       event.preventDefault();
     };
@@ -162,7 +179,6 @@ const MermaidZoomDialogImpl = create<MermaidZoomDialogProps>((props) => {
 
   const handleWheel = useCallback(
     (event: React.WheelEvent<HTMLDivElement>) => {
-      event.preventDefault();
       event.stopPropagation();
 
       const viewport = viewportRef.current;
