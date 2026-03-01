@@ -7,8 +7,11 @@ import '@/app/styles/new/index.css';
 const validAssistantMarkdown = [
   'Assistant valid Mermaid diagram:',
   '```mermaid',
-  'graph LR',
-  '  A[Start] --> B[Done]',
+  'flowchart LR',
+  '  A[User Input] --> B[Backend]',
+  '  B --> C[Database]',
+  '  C --> B',
+  '  B --> D[UI Response]',
   '```',
 ].join('\n');
 

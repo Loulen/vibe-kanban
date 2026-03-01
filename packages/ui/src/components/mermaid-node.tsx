@@ -1,7 +1,6 @@
 import { useEffect, useId, useMemo, useState } from 'react';
 import { NodeKey, SerializedLexicalNode, Spread } from 'lexical';
 import mermaid from 'mermaid';
-import DOMPurify from 'dompurify';
 import {
   createDecoratorNode,
   type DecoratorNodeConfig,
@@ -23,35 +22,72 @@ let isMermaidInitialized = false;
 
 const MAX_MERMAID_CHARS = 20_000;
 const MAX_MERMAID_LINES = 400;
+const DISALLOWED_TAGS = new Set(['script', 'iframe', 'object', 'embed']);
+const URL_ATTRS = new Set(['href', 'xlink:href', 'src']);
 
-function sanitizeMermaidSvg(svg: string): string | null {
-  if (typeof DOMParser === 'undefined') {
-    return null;
+function isUnsafeUrlAttribute(rawValue: string): boolean {
+  const value = rawValue.trim();
+  if (!value) {
+    return true;
   }
 
-  const sanitized = DOMPurify.sanitize(svg, {
-    USE_PROFILES: { svg: true, svgFilters: true },
-    FORBID_TAGS: ['script', 'foreignObject', 'iframe', 'object', 'embed'],
-    ALLOWED_URI_REGEXP:
-      /^(?:(?:https?|mailto|tel):|#|\/|\.\/|\.\.\/|[^a-z]|[a-z+.-]+(?:[^a-z+.-:]|$))/i,
-  });
+  if (value.startsWith('#')) {
+    return false;
+  }
 
-  if (typeof sanitized !== 'string' || sanitized.trim().length === 0) {
+  const normalized = value.replace(/[\u0000-\u001F\u007F\s]+/g, '').toLowerCase();
+
+  if (
+    normalized.startsWith('javascript:') ||
+    normalized.startsWith('data:') ||
+    normalized.startsWith('vbscript:') ||
+    normalized.startsWith('file:')
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+function sanitizeMermaidSvg(svg: string): string | null {
+  if (typeof DOMParser === 'undefined' || typeof XMLSerializer === 'undefined') {
     return null;
   }
 
   const parser = new DOMParser();
-  const document = parser.parseFromString(sanitized, 'image/svg+xml');
+  const document = parser.parseFromString(svg, 'image/svg+xml');
 
   if (document.querySelector('parsererror') || !document.documentElement) {
     return null;
+  }
+
+  for (const element of Array.from(document.querySelectorAll('*'))) {
+    const tagName = element.tagName.toLowerCase();
+
+    if (DISALLOWED_TAGS.has(tagName)) {
+      element.remove();
+      continue;
+    }
+
+    for (const attr of Array.from(element.attributes)) {
+      const attrName = attr.name.toLowerCase();
+
+      if (attrName.startsWith('on')) {
+        element.removeAttribute(attr.name);
+        continue;
+      }
+
+      if (URL_ATTRS.has(attrName) && isUnsafeUrlAttribute(attr.value)) {
+        element.removeAttribute(attr.name);
+      }
+    }
   }
 
   if (document.documentElement.tagName.toLowerCase() !== 'svg') {
     return null;
   }
 
-  return document.documentElement.outerHTML;
+  return new XMLSerializer().serializeToString(document.documentElement);
 }
 
 function ensureMermaidInitialized(): void {
@@ -62,6 +98,9 @@ function ensureMermaidInitialized(): void {
   mermaid.initialize({
     startOnLoad: false,
     securityLevel: 'strict',
+    flowchart: {
+      htmlLabels: false,
+    },
   });
 
   isMermaidInitialized = true;

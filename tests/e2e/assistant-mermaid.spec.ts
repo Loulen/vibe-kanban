@@ -5,6 +5,7 @@ test('validates assistant mermaid rendering behavior', async ({ page }) => {
 
   const validAssistant = page.getByTestId('assistant-valid-mermaid');
   await expect(validAssistant.locator('.wysiwyg svg')).toHaveCount(1);
+  await expect(validAssistant.locator('.wysiwyg svg')).toContainText('User Input');
 
   const invalidAssistant = page.getByTestId('assistant-invalid-mermaid');
   await expect(
@@ -15,7 +16,7 @@ test('validates assistant mermaid rendering behavior', async ({ page }) => {
 
   const nonAssistant = page.getByTestId('non-assistant-mermaid-disabled');
   await expect(nonAssistant.locator('.wysiwyg svg')).toHaveCount(0);
-  await expect(nonAssistant.locator('code')).toContainText('graph LR');
+  await expect(nonAssistant.locator('code')).toContainText('flowchart LR');
 
   const maliciousAssistant = page.getByTestId('assistant-malicious-mermaid');
   await expect(maliciousAssistant.locator('[href^="javascript:"]')).toHaveCount(0);
