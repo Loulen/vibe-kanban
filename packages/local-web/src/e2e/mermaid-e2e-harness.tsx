@@ -27,7 +27,7 @@ const maliciousAssistantMarkdown = [
   '```mermaid',
   'graph LR',
   '  A[Start] --> B[Done]',
-  "  click A \"javascript:alert('xss')\" \"Bad Link\"",
+  '  click A "javascript:alert(\'xss\')" "Bad Link"',
   '```',
 ].join('\n');
 
@@ -77,7 +77,9 @@ function MermaidHarness() {
           className="rounded border bg-panel p-base"
           data-testid="assistant-malicious-mermaid"
         >
-          <h1 className="mb-base text-lg text-high">Assistant Mermaid sanitizer</h1>
+          <h1 className="mb-base text-lg text-high">
+            Assistant Mermaid sanitizer
+          </h1>
           <AssistantMessageEntry
             content={maliciousAssistantMarkdown}
             workspaceId={undefined}
