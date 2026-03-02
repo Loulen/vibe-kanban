@@ -25,8 +25,21 @@ const Dialog = React.forwardRef<
     open?: boolean;
     onOpenChange?: (open: boolean) => void;
     uncloseable?: boolean;
+    fixedViewport?: boolean;
   }
->(({ className, open, onOpenChange, children, uncloseable, ...props }, ref) => {
+>(
+  (
+    {
+      className,
+      open,
+      onOpenChange,
+      children,
+      uncloseable,
+      fixedViewport = false,
+      ...props
+    },
+    ref
+  ) => {
   const { enableScope, disableScope } = useHotkeysContext();
   const dialogRef = React.useRef<HTMLDivElement | null>(null);
 
@@ -134,7 +147,12 @@ const Dialog = React.forwardRef<
   if (!open) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[10000] flex items-start justify-center p-4 overflow-y-auto">
+    <div
+      className={cn(
+        'fixed inset-0 z-[10000] flex justify-center p-4',
+        fixedViewport ? 'items-center overflow-hidden' : 'items-start overflow-y-auto'
+      )}
+    >
       <div
         className="fixed inset-0 bg-black/50"
         onClick={() => (uncloseable ? {} : onOpenChange?.(false))}
