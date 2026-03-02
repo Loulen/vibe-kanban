@@ -281,7 +281,13 @@ const MermaidZoomDialogImpl = create<MermaidZoomDialogProps>((props) => {
     <Dialog
       open={modal.visible}
       onOpenChange={handleClose}
-      className="max-w-none w-[98vw] h-[95vh] p-0 gap-0 overflow-hidden"
+      className="max-w-none w-full h-full my-0 p-0 gap-0 overflow-hidden"
+      style={{
+        width: '98vw',
+        maxWidth: '98vw',
+        height: '95vh',
+        maxHeight: '95vh',
+      }}
     >
       <DialogContent className="h-full w-full overflow-hidden p-0 gap-0">
         <DialogHeader className="border-b px-4 py-3">
