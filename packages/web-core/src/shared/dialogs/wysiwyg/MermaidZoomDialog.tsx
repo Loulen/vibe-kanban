@@ -38,19 +38,6 @@ function readDiagramSize(svgElement: SVGSVGElement): DiagramSize | null {
     };
   }
 
-  const parsedWidth = Number.parseFloat(svgElement.getAttribute('width') ?? '');
-  const parsedHeight = Number.parseFloat(
-    svgElement.getAttribute('height') ?? ''
-  );
-  if (parsedWidth > 0 && parsedHeight > 0) {
-    return {
-      width: parsedWidth,
-      height: parsedHeight,
-      minX: 0,
-      minY: 0,
-    };
-  }
-
   const box = svgElement.getBBox();
   if (box.width <= 0 || box.height <= 0) {
     return null;
@@ -291,8 +278,12 @@ const MermaidZoomDialogImpl = create<MermaidZoomDialogProps>((props) => {
   );
 
   return (
-    <Dialog open={modal.visible} onOpenChange={handleClose}>
-      <DialogContent className="w-[98vw] max-w-[98vw] h-[95vh] max-h-[95vh] overflow-hidden p-0 gap-0">
+    <Dialog
+      open={modal.visible}
+      onOpenChange={handleClose}
+      className="max-w-none w-[98vw] h-[95vh] p-0 gap-0 overflow-hidden"
+    >
+      <DialogContent className="h-full w-full overflow-hidden p-0 gap-0">
         <DialogHeader className="border-b px-4 py-3">
           <DialogTitle>Mermaid diagram</DialogTitle>
         </DialogHeader>
