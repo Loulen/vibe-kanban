@@ -20,37 +20,6 @@ type Transform = {
   y: number;
 };
 
-type DiagramSize = {
-  width: number;
-  height: number;
-  minX: number;
-  minY: number;
-};
-
-function readDiagramSize(svgElement: SVGSVGElement): DiagramSize | null {
-  const viewBox = svgElement.viewBox?.baseVal;
-  if (viewBox && viewBox.width > 0 && viewBox.height > 0) {
-    return {
-      width: viewBox.width,
-      height: viewBox.height,
-      minX: viewBox.x,
-      minY: viewBox.y,
-    };
-  }
-
-  const box = svgElement.getBBox();
-  if (box.width <= 0 || box.height <= 0) {
-    return null;
-  }
-
-  return {
-    width: box.width,
-    height: box.height,
-    minX: box.x,
-    minY: box.y,
-  };
-}
-
 export interface MermaidZoomDialogProps {
   code: string;
 }
@@ -106,23 +75,26 @@ const MermaidZoomDialogImpl = create<MermaidZoomDialogProps>((props) => {
     if (!svgElement) return;
 
     const viewportRect = viewport.getBoundingClientRect();
-    const diagramSize = readDiagramSize(svgElement);
-    if (!diagramSize || !viewportRect.width || !viewportRect.height) {
+    const svgRect = svgElement.getBoundingClientRect();
+    if (
+      !svgRect.width ||
+      !svgRect.height ||
+      !viewportRect.width ||
+      !viewportRect.height
+    ) {
       return;
     }
 
     const padding = 16;
-    const scaleX = (viewportRect.width - padding * 2) / diagramSize.width;
+    const scaleX = (viewportRect.width - padding * 2) / svgRect.width;
     const scale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, scaleX));
 
-    const x =
-      (viewportRect.width - diagramSize.width * scale) / 2 -
-      diagramSize.minX * scale;
-    const renderedHeight = diagramSize.height * scale;
+    const x = padding;
+    const renderedHeight = svgRect.height * scale;
     const y =
       renderedHeight <= viewportRect.height - padding * 2
-        ? (viewportRect.height - renderedHeight) / 2 - diagramSize.minY * scale
-        : padding - diagramSize.minY * scale;
+        ? (viewportRect.height - renderedHeight) / 2
+        : padding;
 
     const nextTransform = { scale, x, y };
     initialTransformRef.current = nextTransform;
