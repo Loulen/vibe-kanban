@@ -113,18 +113,16 @@ const MermaidZoomDialogImpl = create<MermaidZoomDialogProps>((props) => {
 
     const padding = 16;
     const scaleX = (viewportRect.width - padding * 2) / diagramSize.width;
-    const scaleY = (viewportRect.height - padding * 2) / diagramSize.height;
-    const scale = Math.max(
-      MIN_SCALE,
-      Math.min(MAX_SCALE, Math.min(scaleX, scaleY))
-    );
+    const scale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, scaleX));
 
     const x =
       (viewportRect.width - diagramSize.width * scale) / 2 -
       diagramSize.minX * scale;
+    const renderedHeight = diagramSize.height * scale;
     const y =
-      (viewportRect.height - diagramSize.height * scale) / 2 -
-      diagramSize.minY * scale;
+      renderedHeight <= viewportRect.height - padding * 2
+        ? (viewportRect.height - renderedHeight) / 2 - diagramSize.minY * scale
+        : padding - diagramSize.minY * scale;
 
     const nextTransform = { scale, x, y };
     initialTransformRef.current = nextTransform;
