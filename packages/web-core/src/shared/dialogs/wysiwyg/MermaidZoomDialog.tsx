@@ -67,12 +67,12 @@ const MermaidZoomDialogImpl = create<MermaidZoomDialogProps>((props) => {
     };
   }, [props.code]);
 
-  const applyFitToViewport = useCallback(() => {
+  const applyFitToViewport = useCallback((): boolean => {
     const viewport = viewportRef.current;
-    if (!viewport) return;
+    if (!viewport) return false;
 
     const svgElement = viewport.querySelector('svg');
-    if (!svgElement) return;
+    if (!svgElement) return false;
 
     const viewportRect = viewport.getBoundingClientRect();
     const contentBox = svgElement.getBBox();
@@ -93,7 +93,7 @@ const MermaidZoomDialogImpl = create<MermaidZoomDialogProps>((props) => {
       !viewportRect.width ||
       !viewportRect.height
     ) {
-      return;
+      return false;
     }
 
     const padding = 16;
@@ -110,14 +110,25 @@ const MermaidZoomDialogImpl = create<MermaidZoomDialogProps>((props) => {
     const nextTransform = { scale, x, y };
     initialTransformRef.current = nextTransform;
     setTransform(nextTransform);
+    return true;
   }, []);
 
   useEffect(() => {
-    if (!svg) return;
+    if (!svg || !modal.visible) return;
 
-    const frameId = window.requestAnimationFrame(applyFitToViewport);
+    let frameId = 0;
+    let attempts = 0;
+
+    const tryFit = () => {
+      attempts += 1;
+      const didFit = applyFitToViewport();
+      if (didFit || attempts >= 30) return;
+      frameId = window.requestAnimationFrame(tryFit);
+    };
+
+    frameId = window.requestAnimationFrame(tryFit);
     return () => window.cancelAnimationFrame(frameId);
-  }, [svg, applyFitToViewport]);
+  }, [svg, modal.visible, applyFitToViewport]);
 
   useEffect(() => {
     const onResize = () => {
