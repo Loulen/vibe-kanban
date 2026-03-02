@@ -10,7 +10,7 @@ import { create, useModal } from '@ebay/nice-modal-react';
 import { defineModal } from '@/shared/lib/modals';
 import { renderMermaidToSvg } from '@vibe/ui/lib/mermaid';
 
-const MIN_SCALE = 0.2;
+const MIN_SCALE = 0.02;
 const MAX_SCALE = 4;
 const ZOOM_STEP = 1.2;
 
@@ -75,10 +75,21 @@ const MermaidZoomDialogImpl = create<MermaidZoomDialogProps>((props) => {
     if (!svgElement) return;
 
     const viewportRect = viewport.getBoundingClientRect();
+    const contentBox = svgElement.getBBox();
+    const hasContentBox = contentBox.width > 0 && contentBox.height > 0;
+
     const svgRect = svgElement.getBoundingClientRect();
+    const fallbackWidth = svgRect.width;
+    const fallbackHeight = svgRect.height;
+
+    const diagramWidth = hasContentBox ? contentBox.width : fallbackWidth;
+    const diagramHeight = hasContentBox ? contentBox.height : fallbackHeight;
+    const diagramMinX = hasContentBox ? contentBox.x : 0;
+    const diagramMinY = hasContentBox ? contentBox.y : 0;
+
     if (
-      !svgRect.width ||
-      !svgRect.height ||
+      !diagramWidth ||
+      !diagramHeight ||
       !viewportRect.width ||
       !viewportRect.height
     ) {
@@ -86,15 +97,15 @@ const MermaidZoomDialogImpl = create<MermaidZoomDialogProps>((props) => {
     }
 
     const padding = 16;
-    const scaleX = (viewportRect.width - padding * 2) / svgRect.width;
+    const scaleX = (viewportRect.width - padding * 2) / diagramWidth;
     const scale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, scaleX));
 
-    const x = padding;
-    const renderedHeight = svgRect.height * scale;
+    const x = padding - diagramMinX * scale;
+    const renderedHeight = diagramHeight * scale;
     const y =
       renderedHeight <= viewportRect.height - padding * 2
-        ? (viewportRect.height - renderedHeight) / 2
-        : padding;
+        ? (viewportRect.height - renderedHeight) / 2 - diagramMinY * scale
+        : padding - diagramMinY * scale;
 
     const nextTransform = { scale, x, y };
     initialTransformRef.current = nextTransform;
