@@ -20,6 +20,50 @@ type Transform = {
   y: number;
 };
 
+type DiagramSize = {
+  width: number;
+  height: number;
+  minX: number;
+  minY: number;
+};
+
+function readDiagramSize(svgElement: SVGSVGElement): DiagramSize | null {
+  const viewBox = svgElement.viewBox?.baseVal;
+  if (viewBox && viewBox.width > 0 && viewBox.height > 0) {
+    return {
+      width: viewBox.width,
+      height: viewBox.height,
+      minX: viewBox.x,
+      minY: viewBox.y,
+    };
+  }
+
+  const parsedWidth = Number.parseFloat(svgElement.getAttribute('width') ?? '');
+  const parsedHeight = Number.parseFloat(
+    svgElement.getAttribute('height') ?? ''
+  );
+  if (parsedWidth > 0 && parsedHeight > 0) {
+    return {
+      width: parsedWidth,
+      height: parsedHeight,
+      minX: 0,
+      minY: 0,
+    };
+  }
+
+  const box = svgElement.getBBox();
+  if (box.width <= 0 || box.height <= 0) {
+    return null;
+  }
+
+  return {
+    width: box.width,
+    height: box.height,
+    minX: box.x,
+    minY: box.y,
+  };
+}
+
 export interface MermaidZoomDialogProps {
   code: string;
 }
@@ -75,27 +119,25 @@ const MermaidZoomDialogImpl = create<MermaidZoomDialogProps>((props) => {
     if (!svgElement) return;
 
     const viewportRect = viewport.getBoundingClientRect();
-    const box = svgElement.getBBox();
-
-    if (
-      !box.width ||
-      !box.height ||
-      !viewportRect.width ||
-      !viewportRect.height
-    ) {
+    const diagramSize = readDiagramSize(svgElement);
+    if (!diagramSize || !viewportRect.width || !viewportRect.height) {
       return;
     }
 
-    const padding = 24;
-    const scaleX = (viewportRect.width - padding * 2) / box.width;
-    const scaleY = (viewportRect.height - padding * 2) / box.height;
+    const padding = 16;
+    const scaleX = (viewportRect.width - padding * 2) / diagramSize.width;
+    const scaleY = (viewportRect.height - padding * 2) / diagramSize.height;
     const scale = Math.max(
       MIN_SCALE,
       Math.min(MAX_SCALE, Math.min(scaleX, scaleY))
     );
 
-    const x = (viewportRect.width - box.width * scale) / 2 - box.x * scale;
-    const y = (viewportRect.height - box.height * scale) / 2 - box.y * scale;
+    const x =
+      (viewportRect.width - diagramSize.width * scale) / 2 -
+      diagramSize.minX * scale;
+    const y =
+      (viewportRect.height - diagramSize.height * scale) / 2 -
+      diagramSize.minY * scale;
 
     const nextTransform = { scale, x, y };
     initialTransformRef.current = nextTransform;
@@ -134,23 +176,6 @@ const MermaidZoomDialogImpl = create<MermaidZoomDialogProps>((props) => {
 
     return () => {
       viewport.removeEventListener('wheel', blockBrowserWheelDefault);
-    };
-  }, []);
-
-  useEffect(() => {
-    const viewport = viewportRef.current;
-    if (!viewport) return;
-
-    const preventNativeZoom = (event: WheelEvent) => {
-      event.preventDefault();
-    };
-
-    viewport.addEventListener('wheel', preventNativeZoom, {
-      passive: false,
-    });
-
-    return () => {
-      viewport.removeEventListener('wheel', preventNativeZoom);
     };
   }, []);
 
@@ -267,7 +292,7 @@ const MermaidZoomDialogImpl = create<MermaidZoomDialogProps>((props) => {
 
   return (
     <Dialog open={modal.visible} onOpenChange={handleClose}>
-      <DialogContent className="w-[96vw] max-w-[96vw] h-[92vh] max-h-[92vh] overflow-hidden p-0 gap-0">
+      <DialogContent className="w-[98vw] max-w-[98vw] h-[95vh] max-h-[95vh] overflow-hidden p-0 gap-0">
         <DialogHeader className="border-b px-4 py-3">
           <DialogTitle>Mermaid diagram</DialogTitle>
         </DialogHeader>
@@ -321,9 +346,9 @@ const MermaidZoomDialogImpl = create<MermaidZoomDialogProps>((props) => {
             </p>
           )}
           {svg && (
-            <div style={transformStyle}>
+            <div className="absolute left-0 top-0" style={transformStyle}>
               <div
-                className="select-none [&_svg]:max-w-none"
+                className="select-none [&_svg]:block [&_svg]:h-auto [&_svg]:max-w-none [&_svg]:w-auto"
                 dangerouslySetInnerHTML={{ __html: svg }}
               />
             </div>
