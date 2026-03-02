@@ -117,12 +117,11 @@ const MermaidZoomDialogImpl = create<MermaidZoomDialogProps>((props) => {
     if (!svg || !modal.visible) return;
 
     let frameId = 0;
-    let attempts = 0;
+    setTransform({ scale: 1, x: 0, y: 0 });
 
     const tryFit = () => {
-      attempts += 1;
       const didFit = applyFitToViewport();
-      if (didFit || attempts >= 30) return;
+      if (didFit) return;
       frameId = window.requestAnimationFrame(tryFit);
     };
 
@@ -335,9 +334,12 @@ const MermaidZoomDialogImpl = create<MermaidZoomDialogProps>((props) => {
             </p>
           )}
           {svg && (
-            <div className="absolute left-0 top-0" style={transformStyle}>
+            <div
+              className="absolute left-0 top-0 w-full"
+              style={transformStyle}
+            >
               <div
-                className="select-none [&_svg]:block [&_svg]:h-auto [&_svg]:max-w-none [&_svg]:w-auto"
+                className="w-full select-none [&_svg]:block [&_svg]:h-auto [&_svg]:max-w-none [&_svg]:w-full"
                 dangerouslySetInnerHTML={{ __html: svg }}
               />
             </div>
