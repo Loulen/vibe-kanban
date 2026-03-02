@@ -260,6 +260,25 @@ const MermaidZoomDialogImpl = create<MermaidZoomDialogProps>((props) => {
     setTransform(initialTransformRef.current);
   }, []);
 
+  const handleDialogWheelCapture = useCallback(
+    (event: React.WheelEvent<HTMLDivElement>) => {
+      const viewport = viewportRef.current;
+      if (!viewport) {
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
+
+      if (viewport.contains(event.target as Node)) {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+    },
+    []
+  );
+
   const transformStyle = useMemo(
     () => ({
       transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})`,
@@ -280,7 +299,10 @@ const MermaidZoomDialogImpl = create<MermaidZoomDialogProps>((props) => {
         maxHeight: '95vh',
       }}
     >
-      <DialogContent className="h-full w-full overflow-hidden p-0 gap-0">
+      <DialogContent
+        className="flex h-full w-full flex-col overflow-hidden overscroll-none p-0 gap-0"
+        onWheelCapture={handleDialogWheelCapture}
+      >
         <DialogHeader className="border-b px-4 py-3">
           <DialogTitle>Mermaid diagram</DialogTitle>
         </DialogHeader>
@@ -320,7 +342,7 @@ const MermaidZoomDialogImpl = create<MermaidZoomDialogProps>((props) => {
 
         <div
           ref={viewportRef}
-          className="relative h-full w-full overflow-hidden bg-secondary cursor-grab active:cursor-grabbing touch-none overscroll-none"
+          className="relative min-h-0 flex-1 overflow-hidden bg-secondary cursor-grab active:cursor-grabbing touch-none overscroll-none"
           onWheel={handleWheel}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
