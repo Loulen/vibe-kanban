@@ -8,6 +8,11 @@ use thiserror::Error;
 use ts_rs::TS;
 use uuid::Uuid;
 
+/// Default setup script that discovers and aggregates AI artefacts
+/// (CLAUDE.md, .claude/skills) from repo subdirectories into the workspace root.
+pub const DEFAULT_SETUP_SCRIPT: &str =
+    include_str!("../../../../assets/scripts/default-setup-script.sh");
+
 #[derive(Debug, Serialize, TS)]
 pub struct SearchResult {
     pub path: String,
@@ -230,8 +235,8 @@ impl Repo {
         // Use INSERT OR IGNORE + SELECT to handle race conditions atomically
         sqlx::query_as!(
             Repo,
-            r#"INSERT INTO repos (id, path, name, display_name)
-               VALUES ($1, $2, $3, $4)
+            r#"INSERT INTO repos (id, path, name, display_name, setup_script)
+               VALUES ($1, $2, $3, $4, $5)
                ON CONFLICT(path) DO UPDATE SET updated_at = updated_at
                RETURNING id as "id!: Uuid",
                          path,
@@ -251,6 +256,7 @@ impl Repo {
             path_str,
             repo_name,
             display_name,
+            DEFAULT_SETUP_SCRIPT,
         )
         .fetch_one(executor)
         .await
