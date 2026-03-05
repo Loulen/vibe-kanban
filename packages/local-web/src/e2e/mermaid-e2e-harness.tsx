@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import WYSIWYGEditor from '@/shared/components/WYSIWYGEditor';
-import { AssistantMessageEntry } from '@/features/workspace-chat/ui/NewDisplayConversationEntry';
+import { AssistantMessageEntry } from '@/features/workspace-chat/ui/DisplayConversationEntry';
 import '@/app/styles/new/index.css';
 
 const validAssistantMarkdown = [
