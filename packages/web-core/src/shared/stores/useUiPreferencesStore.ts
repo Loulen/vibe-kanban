@@ -79,8 +79,8 @@ export const DEFAULT_KANBAN_FILTER_STATE: KanbanFilterState = {
   priorities: [],
   assigneeIds: [],
   tagIds: [],
-  sortField: 'sort_order',
-  sortDirection: 'asc',
+  sortField: 'updated_at',
+  sortDirection: 'desc',
 };
 
 export const KANBAN_ASSIGNEE_FILTER_VALUES = {
@@ -96,8 +96,8 @@ export const KANBAN_PROJECT_VIEW_IDS = {
 export const DEFAULT_KANBAN_PROJECT_VIEW_ID = KANBAN_PROJECT_VIEW_IDS.TEAM;
 export const DEFAULT_KANBAN_SHOW_WORKSPACES = true;
 
-export const getDefaultShowSubIssuesForView = (viewId: string): boolean =>
-  viewId === KANBAN_PROJECT_VIEW_IDS.PERSONAL;
+export const getDefaultShowSubIssuesForView = (_viewId: string): boolean =>
+  true;
 
 export type KanbanProjectView = {
   id: string;
