@@ -777,6 +777,13 @@ export const repoApi = {
     return handleApiResponse<Repo>(response);
   },
 
+  delete: async (repoId: string): Promise<void> => {
+    const response = await makeRequest(`/api/repos/${repoId}`, {
+      method: 'DELETE',
+    });
+    return handleApiResponse<void>(response);
+  },
+
   register: async (data: {
     path: string;
     display_name?: string;
@@ -1026,13 +1033,14 @@ export const imagesApi = {
    */
   uploadForAttempt: async (
     attemptId: string,
+    sessionId: string,
     file: File
   ): Promise<ImageResponse> => {
     const formData = new FormData();
     formData.append('image', file);
 
     const response = await makeLocalApiRequest(
-      `/api/task-attempts/${attemptId}/images/upload`,
+      `/api/task-attempts/${attemptId}/images/upload?session_id=${sessionId}`,
       {
         method: 'POST',
         body: formData,
@@ -1379,11 +1387,12 @@ export const scratchApi = {
 export const agentsApi = {
   getDiscoveredOptionsStreamUrl: (
     agent: BaseCodingAgent,
-    opts?: { workspaceId?: string; repoId?: string }
+    opts?: { workspaceId?: string; sessionId?: string; repoId?: string }
   ): string => {
     const params = new URLSearchParams();
     params.set('executor', agent);
     if (opts?.workspaceId) params.set('workspace_id', opts.workspaceId);
+    if (opts?.sessionId) params.set('session_id', opts.sessionId);
     if (opts?.repoId) params.set('repo_id', opts.repoId);
 
     return `/api/agents/discovered-options/ws?${params.toString()}`;
@@ -1479,6 +1488,26 @@ export const relayApi = {
       }
     );
     return handleApiResponse<RemoveRelayPairedClientResponse>(response);
+  },
+};
+
+// Releases API (GitHub releases proxy)
+export interface GitHubRelease {
+  name: string;
+  tag_name: string;
+  published_at: string;
+  body: string;
+}
+
+interface ReleasesResponse {
+  releases: GitHubRelease[];
+}
+
+export const releasesApi = {
+  list: async (): Promise<GitHubRelease[]> => {
+    const response = await makeRequest('/api/releases');
+    const result = await handleApiResponse<ReleasesResponse>(response);
+    return result.releases;
   },
 };
 

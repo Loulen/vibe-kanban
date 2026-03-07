@@ -25,7 +25,7 @@ env:
 
 jobs:
   changes:
-    runs-on: ubuntu-latest
+    runs-on: *runner_label
     if: github.event_name == 'pull_request'
     permissions:
       contents: read
@@ -80,11 +80,13 @@ jobs:
               - '.github/actions/**'
             backend-remote:
               - 'crates/remote/**'
+              - 'crates/relay-tunnel/**'
               - 'crates/api-types/**'
               - 'crates/utils/**'
               - 'Cargo.toml'
               - 'Cargo.lock'
               - 'shared/**'
+              - 'rustfmt.toml'
               - 'rust-toolchain.toml'
               - '.cargo/**'
               - 'pnpm-lock.yaml'
@@ -168,6 +170,7 @@ jobs:
         uses: ./.github/actions/cargo-checks-common-setup
         with:
           toolchain: ${{ env.RUST_TOOLCHAIN }}
+          components: rustfmt
           cache-key: backend-remote-checks-${{ runner.os }}-${{ runner.arch }}-${{ env.RUNNER_LABEL }}
           setup-node: 'true'
           setup-sqlx-cli: 'true'
@@ -180,6 +183,12 @@ jobs:
       - name: Check remote Cargo.lock is consistent
         run: |
           cargo metadata --locked --format-version 1 --manifest-path crates/remote/Cargo.toml > /dev/null
+          cargo metadata --locked --format-version 1 --manifest-path crates/relay-tunnel/Cargo.toml > /dev/null
+
+      - name: Check formatting
+        run: |
+          cargo fmt --all --manifest-path crates/remote/Cargo.toml -- --check
+          cargo fmt --all --manifest-path crates/relay-tunnel/Cargo.toml -- --check
 
       - name: Check generated types
         run: npm run remote:generate-types:check

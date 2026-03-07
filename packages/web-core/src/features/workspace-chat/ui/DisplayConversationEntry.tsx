@@ -462,6 +462,7 @@ function AppChatMarkdown({
   enableMermaid?: boolean;
 }) {
   const { viewFileInChanges, findMatchingDiffPath } = useChangesView();
+  const { selectedSessionId } = useWorkspaceContext();
 
   return (
     <ChatMarkdown
@@ -476,6 +477,7 @@ function AppChatMarkdown({
           className={className}
           taskAttemptId={workspaceId}
           enableMermaid={enableMermaid}
+          sessionId={selectedSessionId}
           findMatchingDiffPath={findMatchingDiffPath}
           onCodeClick={viewFileInChanges}
         />
@@ -751,6 +753,7 @@ function UserFeedbackEntry({
   taskAttemptId: string | undefined;
 }) {
   const { t } = useTranslation('common');
+  const { selectedSessionId } = useWorkspaceContext();
 
   return (
     <div className="py-2">
@@ -766,6 +769,7 @@ function UserFeedbackEntry({
           disabled
           className="whitespace-pre-wrap break-words flex flex-col gap-1 font-light py-3"
           taskAttemptId={taskAttemptId}
+          sessionId={selectedSessionId}
         />
       </div>
     </div>
