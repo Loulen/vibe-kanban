@@ -9,6 +9,8 @@ import { Button } from '@vibe/ui/components/Button';
 import { create, useModal } from '@ebay/nice-modal-react';
 import { defineModal } from '@/shared/lib/modals';
 import { renderMermaidToSvg } from '@vibe/ui/lib/mermaid';
+import { writeClipboardViaBridge } from '@/shared/lib/clipboard';
+import { Check, ClipboardCopy, Image } from 'lucide-react';
 
 const MIN_SCALE = 0.02;
 const MAX_SCALE = 4;
@@ -57,9 +59,10 @@ const MermaidZoomDialogImpl = create<MermaidZoomDialogProps>((props) => {
         if (!isMounted) return;
         setSvg(nextSvg);
       })
-      .catch(() => {
+      .catch((err: unknown) => {
         if (!isMounted) return;
-        setError('Unable to render Mermaid diagram');
+        const message = err instanceof Error ? err.message : String(err ?? '');
+        setError(message || 'Unable to render Mermaid diagram');
       });
 
     return () => {
@@ -260,6 +263,75 @@ const MermaidZoomDialogImpl = create<MermaidZoomDialogProps>((props) => {
     setTransform(initialTransformRef.current);
   }, []);
 
+  const [codeCopied, setCodeCopied] = useState(false);
+  const [pngCopied, setPngCopied] = useState(false);
+
+  const handleCopyCode = useCallback(async () => {
+    await writeClipboardViaBridge(props.code);
+    setCodeCopied(true);
+    window.setTimeout(() => setCodeCopied(false), 1500);
+  }, [props.code]);
+
+  const handleCopyPng = useCallback(async () => {
+    if (!svg) return;
+
+    const svgEl = viewportRef.current?.querySelector('svg');
+    if (!svgEl) return;
+
+    const bbox = svgEl.getBBox();
+    const width = bbox.width > 0 ? bbox.width : svgEl.clientWidth;
+    const height = bbox.height > 0 ? bbox.height : svgEl.clientHeight;
+    const dpr = 2;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    ctx.scale(dpr, dpr);
+
+    const svgClone = svgEl.cloneNode(true) as SVGSVGElement;
+    svgClone.setAttribute('width', String(width));
+    svgClone.setAttribute('height', String(height));
+    svgClone.setAttribute('viewBox', `${bbox.x} ${bbox.y} ${width} ${height}`);
+
+    const svgData = new XMLSerializer().serializeToString(svgClone);
+    // Use a data URL instead of a blob URL to avoid tainting the canvas
+    const dataUrl =
+      'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgData);
+
+    const img = new window.Image();
+    img.onload = () => {
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, width, height);
+      ctx.drawImage(img, 0, 0, width, height);
+
+      canvas.toBlob(async (pngBlob) => {
+        if (!pngBlob) return;
+
+        try {
+          await navigator.clipboard.write([
+            new ClipboardItem({ 'image/png': pngBlob }),
+          ]);
+          setPngCopied(true);
+          window.setTimeout(() => setPngCopied(false), 1500);
+        } catch {
+          // Fallback: download the PNG
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(pngBlob);
+          a.download = 'mermaid-diagram.png';
+          a.click();
+          URL.revokeObjectURL(a.href);
+          setPngCopied(true);
+          window.setTimeout(() => setPngCopied(false), 1500);
+        }
+      }, 'image/png');
+    };
+    img.src = dataUrl;
+  }, [svg]);
+
   const transformStyle = useMemo(
     () => ({
       transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})`,
@@ -317,7 +389,62 @@ const MermaidZoomDialogImpl = create<MermaidZoomDialogProps>((props) => {
           <p className="text-xs text-muted-foreground ml-2">
             {Math.round(transform.scale * 100)}%
           </p>
+
+          <div className="ml-auto flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              aria-label="Copy Mermaid code"
+              onClick={handleCopyCode}
+            >
+              {codeCopied ? (
+                <Check className="size-3.5 text-green-500" />
+              ) : (
+                <ClipboardCopy className="size-3.5" />
+              )}
+              <span className="ml-1.5">
+                {codeCopied ? 'Copied!' : 'Copy code'}
+              </span>
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              aria-label="Copy as PNG"
+              disabled={!svg}
+              onClick={handleCopyPng}
+            >
+              {pngCopied ? (
+                <Check className="size-3.5 text-green-500" />
+              ) : (
+                <Image className="size-3.5" />
+              )}
+              <span className="ml-1.5">
+                {pngCopied ? 'Copied!' : 'Copy PNG'}
+              </span>
+            </Button>
+          </div>
         </div>
+
+        {error && (
+          <div className="p-4 space-y-3 overflow-auto border-b">
+            <p className="text-sm font-medium text-error">
+              Unable to render Mermaid diagram
+            </p>
+            <pre className="rounded bg-error/10 p-3 text-xs text-error overflow-auto max-h-24 whitespace-pre-wrap">
+              {error}
+            </pre>
+            <details className="text-xs text-muted-foreground">
+              <summary className="cursor-pointer hover:text-foreground">
+                Show source code
+              </summary>
+              <pre className="mt-2 rounded bg-secondary p-3 overflow-auto max-h-48 whitespace-pre-wrap">
+                {props.code}
+              </pre>
+            </details>
+          </div>
+        )}
 
         <div
           ref={viewportRef}
@@ -328,7 +455,6 @@ const MermaidZoomDialogImpl = create<MermaidZoomDialogProps>((props) => {
           onPointerUp={handlePointerUp}
           onPointerCancel={handlePointerUp}
         >
-          {error && <p className="p-4 text-xs text-error">{error}</p>}
           {!error && !svg && (
             <p className="p-4 text-xs text-muted-foreground">
               Rendering Mermaid diagram...

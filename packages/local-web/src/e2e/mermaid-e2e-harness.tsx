@@ -1,11 +1,11 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import { Provider as NiceModalProvider } from '@ebay/nice-modal-react';
 import WYSIWYGEditor from '@/shared/components/WYSIWYGEditor';
-import { AssistantMessageEntry } from '@/features/workspace-chat/ui/DisplayConversationEntry';
 import '@/app/styles/new/index.css';
 
-const validAssistantMarkdown = [
-  'Assistant valid Mermaid diagram:',
+const validMermaidMarkdown = [
+  'Valid Mermaid diagram:',
   '```mermaid',
   'flowchart LR',
   '  A[User Input] --> B[Backend]',
@@ -15,18 +15,18 @@ const validAssistantMarkdown = [
   '```',
 ].join('\n');
 
-const invalidAssistantMarkdown = [
-  'Assistant invalid Mermaid diagram:',
+const invalidMermaidMarkdown = [
+  'Invalid Mermaid diagram:',
   '```mermaid',
   'graph LR',
   '  A-->',
   '```',
 ].join('\n');
 
-const nonAssistantMarkdown = validAssistantMarkdown;
+const nonAssistantMarkdown = validMermaidMarkdown;
 
-const maliciousAssistantMarkdown = [
-  'Assistant Mermaid sanitizer check:',
+const maliciousMermaidMarkdown = [
+  'Mermaid sanitizer check:',
   '```mermaid',
   'graph LR',
   '  A[Start] --> B[Done]',
@@ -36,60 +36,63 @@ const maliciousAssistantMarkdown = [
 
 function MermaidHarness() {
   return (
-    <main className="new-design min-h-screen bg-primary p-double font-ibm-plex-sans text-normal">
-      <div className="mx-auto flex max-w-4xl flex-col gap-double">
-        <section
-          className="rounded border bg-panel p-base"
-          data-testid="assistant-valid-mermaid"
-        >
-          <h1 className="mb-base text-lg text-high">Assistant valid Mermaid</h1>
-          <AssistantMessageEntry
-            content={validAssistantMarkdown}
-            workspaceId={undefined}
-          />
-        </section>
+    <NiceModalProvider>
+      <main className="new-design min-h-screen bg-primary p-double font-ibm-plex-sans text-normal">
+        <div className="mx-auto flex max-w-4xl flex-col gap-double">
+          <section
+            className="rounded border bg-panel p-base"
+            data-testid="assistant-valid-mermaid"
+          >
+            <h1 className="mb-base text-lg text-high">
+              Valid Mermaid (enabled)
+            </h1>
+            <WYSIWYGEditor
+              disabled={true}
+              value={validMermaidMarkdown}
+              enableMermaid={true}
+            />
+          </section>
 
-        <section
-          className="rounded border bg-panel p-base"
-          data-testid="assistant-invalid-mermaid"
-        >
-          <h1 className="mb-base text-lg text-high">
-            Assistant invalid Mermaid
-          </h1>
-          <AssistantMessageEntry
-            content={invalidAssistantMarkdown}
-            workspaceId={undefined}
-          />
-        </section>
+          <section
+            className="rounded border bg-panel p-base"
+            data-testid="assistant-invalid-mermaid"
+          >
+            <h1 className="mb-base text-lg text-high">
+              Invalid Mermaid (enabled)
+            </h1>
+            <WYSIWYGEditor
+              disabled={true}
+              value={invalidMermaidMarkdown}
+              enableMermaid={true}
+            />
+          </section>
 
-        <section
-          className="rounded border bg-panel p-base"
-          data-testid="non-assistant-mermaid-disabled"
-        >
-          <h1 className="mb-base text-lg text-high">
-            Non-assistant Mermaid disabled
-          </h1>
-          <WYSIWYGEditor
-            disabled={true}
-            value={nonAssistantMarkdown}
-            enableMermaid={false}
-          />
-        </section>
+          <section
+            className="rounded border bg-panel p-base"
+            data-testid="non-assistant-mermaid-disabled"
+          >
+            <h1 className="mb-base text-lg text-high">Mermaid disabled</h1>
+            <WYSIWYGEditor
+              disabled={true}
+              value={nonAssistantMarkdown}
+              enableMermaid={false}
+            />
+          </section>
 
-        <section
-          className="rounded border bg-panel p-base"
-          data-testid="assistant-malicious-mermaid"
-        >
-          <h1 className="mb-base text-lg text-high">
-            Assistant Mermaid sanitizer
-          </h1>
-          <AssistantMessageEntry
-            content={maliciousAssistantMarkdown}
-            workspaceId={undefined}
-          />
-        </section>
-      </div>
-    </main>
+          <section
+            className="rounded border bg-panel p-base"
+            data-testid="assistant-malicious-mermaid"
+          >
+            <h1 className="mb-base text-lg text-high">Mermaid sanitizer</h1>
+            <WYSIWYGEditor
+              disabled={true}
+              value={maliciousMermaidMarkdown}
+              enableMermaid={true}
+            />
+          </section>
+        </div>
+      </main>
+    </NiceModalProvider>
   );
 }
 
