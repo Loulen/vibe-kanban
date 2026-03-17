@@ -154,6 +154,7 @@ const Dialog = React.forwardRef<
       )}
     >
       <div
+        data-tauri-drag-region
         className="fixed inset-0 bg-black/50"
         onClick={() => (uncloseable ? {} : onOpenChange?.(false))}
       />
