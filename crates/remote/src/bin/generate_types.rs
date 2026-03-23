@@ -6,13 +6,14 @@ use api_types::{
     CreateIssueRelationshipRequest, CreateIssueRequest, CreateIssueTagRequest,
     CreateProjectRequest, CreateProjectStatusRequest, CreateTagRequest, Issue, IssueAssignee,
     IssueComment, IssueCommentReaction, IssueFollower, IssuePriority, IssueRelationship,
-    IssueRelationshipType, IssueTag, ListRelayHostsResponse, MemberRole, Notification,
-    NotificationGroupKind, NotificationPayload, NotificationType, OrganizationMember, Project,
-    ProjectStatus, PullRequest, PullRequestStatus, RelayHost, RelaySession,
-    RelaySessionAuthCodeResponse, Tag, UpdateIssueCommentReactionRequest,
+    IssueRelationshipType, IssueSortField, IssueTag, ListIssuesQuery, ListIssuesResponse,
+    MemberRole, Notification, NotificationGroupKind, NotificationPayload, NotificationType,
+    OrganizationMember, Project, ProjectStatus, PullRequest, PullRequestStatus,
+    SearchIssuesRequest, SortDirection, Tag, UpdateIssueCommentReactionRequest,
     UpdateIssueCommentRequest, UpdateIssueRequest, UpdateNotificationRequest, UpdateProjectRequest,
     UpdateProjectStatusRequest, UpdateTagRequest, User, UserData, Workspace,
 };
+use relay_types::{CreateRemoteSessionResponse, ListRelayHostsResponse, RelayHost};
 use remote::{
     routes::{
         all_mutation_definitions,
@@ -20,7 +21,6 @@ use remote::{
             CommitAttachmentsRequest, CommitAttachmentsResponse, ConfirmUploadRequest,
             InitUploadRequest, InitUploadResponse,
         },
-        hosts::CreateRelaySessionResponse,
     },
     shape_routes::all_shape_routes,
 };
@@ -92,15 +92,18 @@ fn export_shapes() -> String {
         IssueComment::decl(),
         IssueCommentReaction::decl(),
         IssuePriority::decl(),
+        IssueSortField::decl(),
+        ListIssuesQuery::decl(),
+        SearchIssuesRequest::decl(),
+        ListIssuesResponse::decl(),
         PullRequestStatus::decl(),
         PullRequest::decl(),
+        SortDirection::decl(),
         UserData::decl(),
         User::decl(),
         RelayHost::decl(),
         ListRelayHostsResponse::decl(),
-        RelaySession::decl(),
-        CreateRelaySessionResponse::decl(),
-        RelaySessionAuthCodeResponse::decl(),
+        CreateRemoteSessionResponse::decl(),
         MemberRole::decl(),
         OrganizationMember::decl(),
         // Mutation request types
