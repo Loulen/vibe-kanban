@@ -3,20 +3,20 @@
 use std::time::Duration;
 
 use api_types::{
-    AcceptInvitationResponse, CreateInvitationRequest, CreateInvitationResponse,
-    CreateIssueAssigneeRequest, CreateIssueRelationshipRequest, CreateIssueRequest,
-    CreateIssueTagRequest, CreateOrganizationRequest, CreateOrganizationResponse,
-    CreateWorkspaceRequest, DeleteResponse, DeleteWorkspaceRequest, GetInvitationResponse,
-    GetOrganizationResponse, HandoffInitRequest, HandoffInitResponse, HandoffRedeemRequest,
-    HandoffRedeemResponse, Issue, IssueAssignee, IssueRelationship, IssueTag,
+    AcceptInvitationResponse, AuthMethodsResponse, CreateInvitationRequest,
+    CreateInvitationResponse, CreateIssueAssigneeRequest, CreateIssueRelationshipRequest,
+    CreateIssueRequest, CreateIssueTagRequest, CreateOrganizationRequest,
+    CreateOrganizationResponse, CreateWorkspaceRequest, DeleteResponse, DeleteWorkspaceRequest,
+    GetInvitationResponse, GetOrganizationResponse, HandoffInitRequest, HandoffInitResponse,
+    HandoffRedeemRequest, HandoffRedeemResponse, Issue, IssueAssignee, IssueRelationship, IssueTag,
     ListAttachmentsResponse, ListInvitationsResponse, ListIssueAssigneesResponse,
     ListIssueRelationshipsResponse, ListIssueTagsResponse, ListIssuesResponse, ListMembersResponse,
     ListOrganizationsResponse, ListProjectStatusesResponse, ListProjectsResponse,
-    ListPullRequestsResponse, ListTagsResponse, MutationResponse, Organization, ProfileResponse,
-    PullRequest, RevokeInvitationRequest, SearchIssuesRequest, Tag, TokenRefreshRequest,
-    TokenRefreshResponse, UpdateIssueRequest, UpdateMemberRoleRequest, UpdateMemberRoleResponse,
-    UpdateOrganizationRequest, UpdatePullRequestApiRequest, UpdateWorkspaceRequest,
-    UpsertPullRequestRequest, Workspace,
+    ListPullRequestsResponse, ListTagsResponse, LocalLoginRequest, LocalLoginResponse,
+    MutationResponse, Organization, ProfileResponse, PullRequest, RevokeInvitationRequest,
+    SearchIssuesRequest, Tag, TokenRefreshRequest, TokenRefreshResponse, UpdateIssueRequest,
+    UpdateMemberRoleRequest, UpdateMemberRoleResponse, UpdateOrganizationRequest,
+    UpdatePullRequestApiRequest, UpdateWorkspaceRequest, UpsertPullRequestRequest, Workspace,
 };
 use backon::{ExponentialBuilder, Retryable};
 use chrono::Duration as ChronoDuration;
@@ -59,7 +59,7 @@ impl RemoteClientError {
     }
 
     /// Returns true if the error is transient and should be retried.
-    pub fn should_retry(&self) -> bool {
+    fn should_retry(&self) -> bool {
         match self {
             Self::Transport(_) | Self::Timeout => true,
             Self::Http { status, .. } => (500..=599).contains(status),
@@ -67,7 +67,7 @@ impl RemoteClientError {
         }
     }
 
-    pub fn is_definitive_auth_failure(&self) -> bool {
+    fn is_definitive_auth_failure(&self) -> bool {
         match self {
             Self::Auth => true,
             Self::Api(code) => code.is_definitive_auth_failure(),
@@ -282,11 +282,6 @@ impl RemoteClient {
             .map_err(|e| self.map_api_error(e))
     }
 
-    /// Returns the base URL for the client.
-    pub fn base_url(&self) -> &str {
-        self.base.as_str()
-    }
-
     /// Returns a valid access token for use-cases like maintaining a websocket connection.
     pub async fn access_token(&self) -> Result<String, RemoteClientError> {
         self.require_token().await
@@ -310,6 +305,19 @@ impl RemoteClient {
         self.post_public("/v1/oauth/web/redeem", Some(request))
             .await
             .map_err(|e| self.map_api_error(e))
+    }
+
+    pub async fn local_login(
+        &self,
+        request: &LocalLoginRequest,
+    ) -> Result<LocalLoginResponse, RemoteClientError> {
+        self.post_public("/v1/auth/local/login", Some(request))
+            .await
+            .map_err(|e| self.map_api_error(e))
+    }
+
+    pub async fn auth_methods(&self) -> Result<AuthMethodsResponse, RemoteClientError> {
+        self.get_public("/v1/auth/methods").await
     }
 
     /// Gets an invitation by token (public, no auth required).
